@@ -18,7 +18,13 @@ import { CompressionActionsAndResults } from '@/components/CompressionActionsAnd
 export default function HomeScreen() {
   const [images, setImages] = useState<SelectedImage[]>([]);
   const [quality, setQuality] = useState<number>(75);
+
+  const [isSelecting, setIsSelecting] = useState<boolean>(false);
+  const [selectionProgress, setSelectionProgress] = useState<number>(0);
+  const [selectionProgressText, setSelectionProgressText] = useState<string>('');
+
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
+  const [compressProgress, setCompressProgress] = useState<number>(0);
   const [progressText, setProgressText] = useState<string>('');
   const [compressedResult, setCompressedResult] = useState<CompressionResult | null>(null);
   const [savedFolderUri, setSavedFolderUri] = useState<string | null>(null);
@@ -44,16 +50,28 @@ export default function HomeScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         quality: 1,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
+        setIsSelecting(true);
+        setSelectionProgress(0.05);
+        setSelectionProgressText(`Loading ${result.assets.length} image${result.assets.length > 1 ? 's' : ''}...`);
+
+        // Give the UI a frame to render the progress bar
+        await new Promise((resolve) => setTimeout(resolve, 150));
+
         const picked: SelectedImage[] = [];
 
         for (let i = 0; i < result.assets.length; i++) {
           const asset = result.assets[i];
+          const currentStep = i + 1;
+          const ratio = currentStep / result.assets.length;
+          setSelectionProgress(ratio);
+          setSelectionProgressText(`Processing image ${currentStep} of ${result.assets.length}...`);
+
           let fileSize = asset.fileSize;
 
           if (!fileSize) {
@@ -75,7 +93,14 @@ export default function HomeScreen() {
             width: asset.width,
             height: asset.height,
           });
+
+          // Allow the UI thread to update progress smoothly
+          await new Promise((resolve) => setTimeout(resolve, 80));
         }
+
+        setSelectionProgress(1);
+        setSelectionProgressText('Complete!');
+        await new Promise((resolve) => setTimeout(resolve, 120));
 
         if (compressedResult?.outputDirectoryUri) {
           deleteDirectorySafely(compressedResult.outputDirectoryUri);
@@ -85,6 +110,10 @@ export default function HomeScreen() {
       }
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to pick images');
+    } finally {
+      setIsSelecting(false);
+      setSelectionProgress(0);
+      setSelectionProgressText('');
     }
   };
 
@@ -96,15 +125,21 @@ export default function HomeScreen() {
     }
 
     setIsProcessing(true);
+    setCompressProgress(0);
+    setProgressText('Starting compression...');
     setCompressedResult(null);
 
     try {
-      const result = await compressImages(images, quality, (text) => setProgressText(text));
+      const result = await compressImages(images, quality, (prog, text) => {
+        setCompressProgress(prog);
+        setProgressText(text);
+      });
       setCompressedResult(result);
     } catch (err: any) {
       Alert.alert('Compression Error', err.message || 'Error occurred while compressing images');
     } finally {
       setIsProcessing(false);
+      setCompressProgress(0);
       setProgressText('');
     }
   };
@@ -126,8 +161,10 @@ export default function HomeScreen() {
           setSaveProgressText(text);
         }
       );
-      // Once saved, temporary files were deleted by saveResultToFileManager, clear result state
+      // Once successfully saved, reset back to primary screen
       setCompressedResult(null);
+      setImages([]);
+      cleanCacheDirectory();
     } catch (err: any) {
       Alert.alert('Save Error', err.message || 'Could not save file to file manager');
     } finally {
@@ -152,10 +189,21 @@ export default function HomeScreen() {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {images.length === 0 ? (
-          <UploadCard onPickImages={handlePickImages} />
+          <UploadCard
+            onPickImages={handlePickImages}
+            isSelecting={isSelecting}
+            selectionProgress={selectionProgress}
+            selectionProgressText={selectionProgressText}
+          />
         ) : (
           <View style={styles.activeContainer}>
-            <SelectedImagesPreview images={images} onReset={handleReset} />
+            <SelectedImagesPreview
+              images={images}
+              onReset={handleReset}
+              isSelecting={isSelecting}
+              selectionProgress={selectionProgress}
+              selectionProgressText={selectionProgressText}
+            />
 
             <QualitySlider quality={quality} onQualityChange={(val) => setQuality(val)} />
 
@@ -163,6 +211,7 @@ export default function HomeScreen() {
               imageCount={images.length}
               isProcessing={isProcessing}
               progressText={progressText}
+              compressProgress={compressProgress}
               isSaving={isSaving}
               saveProgress={saveProgress}
               saveProgressText={saveProgressText}

@@ -40,7 +40,7 @@ export const deleteDirectorySafely = async (dirUri?: string): Promise<void> => {
 export const compressImages = async (
   images: SelectedImage[],
   quality: number,
-  onProgress?: (text: string) => void
+  onProgress?: (progress: number, text: string) => void
 ): Promise<CompressionResult> => {
   const compressedFiles: CompressedFileItem[] = [];
   const timestamp = Date.now();
@@ -54,7 +54,8 @@ export const compressImages = async (
 
   for (let i = 0; i < images.length; i++) {
     const img = images[i];
-    onProgress?.(`Compressing ${i + 1} of ${images.length}...`);
+    const progressRatio = (i + 1) / images.length;
+    onProgress?.(progressRatio, `Compressing image ${i + 1} of ${images.length}...`);
 
     totalOrigSize += img.originalSize || 0;
 

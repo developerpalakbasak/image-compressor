@@ -13,7 +13,7 @@ export const QualitySlider: React.FC<QualitySliderProps> = ({ quality, onQuality
     <View style={styles.sectionCard}>
       <View style={styles.sectionHeader}>
         <View style={styles.titleRow}>
-          <Ionicons name="options-outline" size={18} color="#60A5FA" />
+          <Ionicons name="options-outline" size={18} color="#10B981" />
           <Text style={styles.sectionTitle}>Compression Quality</Text>
         </View>
         <View style={styles.qualityPill}>
@@ -33,9 +33,9 @@ export const QualitySlider: React.FC<QualitySliderProps> = ({ quality, onQuality
           step={1}
           value={quality}
           onValueChange={onQualityChange}
-          minimumTrackTintColor="#3B82F6"
+          minimumTrackTintColor="#10B981"
           maximumTrackTintColor="#334155"
-          thumbTintColor="#60A5FA"
+          thumbTintColor="#10B981"
         />
       </View>
     </View>
@@ -67,15 +67,15 @@ const styles = StyleSheet.create({
     color: '#F1F5F9',
   },
   qualityPill: {
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
     paddingVertical: 4,
     paddingHorizontal: 12,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.3)',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
   qualityPillText: {
-    color: '#60A5FA',
+    color: '#10B981',
     fontSize: 14,
     fontWeight: '700',
   },

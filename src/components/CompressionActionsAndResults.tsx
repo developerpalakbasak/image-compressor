@@ -8,6 +8,7 @@ interface CompressionActionsAndResultsProps {
   imageCount: number;
   isProcessing: boolean;
   progressText: string;
+  compressProgress?: number;
   isSaving: boolean;
   saveProgress: number;
   saveProgressText: string;
@@ -20,6 +21,7 @@ export const CompressionActionsAndResults: React.FC<CompressionActionsAndResults
   imageCount,
   isProcessing,
   progressText,
+  compressProgress = 0,
   isSaving,
   saveProgress,
   saveProgressText,
@@ -34,7 +36,7 @@ export const CompressionActionsAndResults: React.FC<CompressionActionsAndResults
         <Ionicons
           name="images-outline"
           size={22}
-          color="#93C5FD"
+          color="#10B981"
         />
         <Text style={styles.outputHintText}>
           {imageCount === 1
@@ -42,6 +44,28 @@ export const CompressionActionsAndResults: React.FC<CompressionActionsAndResults
             : `Output: ${imageCount} individual optimized JPEG photos saved directly to "Image Compressor" folder`}
         </Text>
       </View>
+
+      {/* Compress Progress Bar */}
+      {!result && isProcessing && (
+        <View style={styles.progressContainer}>
+          <View style={styles.progressLabelRow}>
+            <Text style={styles.progressLabelText}>
+              {progressText || 'Compressing images...'}
+            </Text>
+            <Text style={styles.progressPercentText}>
+              {Math.round(compressProgress * 100)}%
+            </Text>
+          </View>
+          <View style={styles.progressBarTrack}>
+            <View
+              style={[
+                styles.progressBarFill,
+                { width: `${Math.max(5, Math.min(100, Math.round(compressProgress * 100)))}%` },
+              ]}
+            />
+          </View>
+        </View>
+      )}
 
       {/* Compress Button */}
       {!result && (
@@ -181,24 +205,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: 'rgba(30, 58, 138, 0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
     padding: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.25)',
+    borderColor: 'rgba(16, 185, 129, 0.25)',
   },
   outputHintText: {
     flex: 1,
-    color: '#93C5FD',
+    color: '#6EE7B7',
     fontSize: 12,
     lineHeight: 18,
   },
   compressButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#10B981',
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 10,

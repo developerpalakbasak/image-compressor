@@ -52,11 +52,11 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 10,
-    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(96, 165, 250, 0.3)',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
     overflow: 'hidden',
   },
   logoIcon: {
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   appSubtitleHighlight: {
-    color: '#60A5FA',
+    color: '#10B981',
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
