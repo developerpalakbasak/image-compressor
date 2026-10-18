@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as SplashScreen from 'expo-splash-screen';
+import { useEffect, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SelectedImage, CompressionResult } from '@/types/image-compressor';
-import { compressImages, cleanCacheDirectory, deleteDirectorySafely } from '@/services/image-compression';
+import { cleanCacheDirectory, compressImages, deleteDirectorySafely } from '@/services/image-compression';
 import { getSavedFolderUri, saveResultToFileManager } from '@/services/storage';
+import { CompressionResult, SelectedImage } from '@/types/image-compressor';
 
-import { Header } from '@/components/Header';
-import { UploadCard } from '@/components/UploadCard';
-import { SelectedImagesPreview } from '@/components/SelectedImagesPreview';
-import { QualitySlider } from '@/components/QualitySlider';
 import { CompressionActionsAndResults } from '@/components/CompressionActionsAndResults';
+import { Header } from '@/components/Header';
+import { QualitySlider } from '@/components/QualitySlider';
+import { SelectedImagesPreview } from '@/components/SelectedImagesPreview';
+import { UploadCard } from '@/components/UploadCard';
 
 export default function HomeScreen() {
   const [images, setImages] = useState<SelectedImage[]>([]);
@@ -34,7 +34,7 @@ export default function HomeScreen() {
   const [saveProgressText, setSaveProgressText] = useState<string>('');
 
   useEffect(() => {
-    SplashScreen.hideAsync().catch(() => {});
+    SplashScreen.hideAsync().catch(() => { });
     cleanCacheDirectory();
     getSavedFolderUri().then((uri) => {
       if (uri) setSavedFolderUri(uri);
@@ -43,16 +43,10 @@ export default function HomeScreen() {
 
   const handlePickImages = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permissionResult.granted) {
-        Alert.alert('Permission Denied', 'Camera roll permission is required to select images.');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsMultipleSelection: true,
-        quality: 1,
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'image/*',
+        multiple: true,
+        copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
@@ -72,7 +66,7 @@ export default function HomeScreen() {
           setSelectionProgress(ratio);
           setSelectionProgressText(`Processing image ${currentStep} of ${result.assets.length}...`);
 
-          let fileSize = asset.fileSize;
+          let fileSize = asset.size;
 
           if (!fileSize) {
             try {
@@ -85,17 +79,18 @@ export default function HomeScreen() {
             }
           }
 
+          // DocumentPicker preserves the true original filename in asset.name
+          const originalName = asset.name || `image_${i + 1}.jpg`;
+
           picked.push({
             id: `${Date.now()}_${i}`,
             uri: asset.uri,
-            name: asset.fileName || `image_${i + 1}.jpg`,
+            name: originalName,
             originalSize: fileSize,
-            width: asset.width,
-            height: asset.height,
           });
 
           // Allow the UI thread to update progress smoothly
-          await new Promise((resolve) => setTimeout(resolve, 80));
+          await new Promise((resolve) => setTimeout(resolve, 60));
         }
 
         setSelectionProgress(1);
