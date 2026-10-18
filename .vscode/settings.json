@@ -3,5 +3,6 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "cmake.sourceDirectory": "C:/Users/palak/Desktop/react_native/custom_cpp_module/tm"
 }
