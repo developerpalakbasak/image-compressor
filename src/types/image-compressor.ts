@@ -21,4 +21,5 @@ export interface CompressionResult {
   totalOriginalSize: number;
   totalCompressedSize: number;
   reductionPercentage: number;
+  outputDirectoryUri?: string;
 }

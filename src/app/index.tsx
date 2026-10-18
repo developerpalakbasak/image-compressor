@@ -6,7 +6,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { SelectedImage, CompressionResult } from '@/types/image-compressor';
-import { compressImages } from '@/services/image-compression';
+import { compressImages, cleanCacheDirectory, deleteDirectorySafely } from '@/services/image-compression';
 import { getSavedFolderUri, saveResultToFileManager } from '@/services/storage';
 
 import { Header } from '@/components/Header';
@@ -29,6 +29,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
+    cleanCacheDirectory();
     getSavedFolderUri().then((uri) => {
       if (uri) setSavedFolderUri(uri);
     });
@@ -76,6 +77,9 @@ export default function HomeScreen() {
           });
         }
 
+        if (compressedResult?.outputDirectoryUri) {
+          deleteDirectorySafely(compressedResult.outputDirectoryUri);
+        }
         setImages(picked);
         setCompressedResult(null);
       }
@@ -86,6 +90,10 @@ export default function HomeScreen() {
 
   const handleCompress = async () => {
     if (images.length === 0) return;
+
+    if (compressedResult?.outputDirectoryUri) {
+      deleteDirectorySafely(compressedResult.outputDirectoryUri);
+    }
 
     setIsProcessing(true);
     setCompressedResult(null);
@@ -118,6 +126,8 @@ export default function HomeScreen() {
           setSaveProgressText(text);
         }
       );
+      // Once saved, temporary files were deleted by saveResultToFileManager, clear result state
+      setCompressedResult(null);
     } catch (err: any) {
       Alert.alert('Save Error', err.message || 'Could not save file to file manager');
     } finally {
@@ -128,8 +138,12 @@ export default function HomeScreen() {
   };
 
   const handleReset = () => {
+    if (compressedResult?.outputDirectoryUri) {
+      deleteDirectorySafely(compressedResult.outputDirectoryUri);
+    }
     setImages([]);
     setCompressedResult(null);
+    cleanCacheDirectory();
   };
 
   return (

@@ -18,7 +18,7 @@ export const UploadCard: React.FC<UploadCardProps> = ({ onPickImages }) => {
       </View>
       <Text style={styles.uploadTitle}>Select Image(s) as Input</Text>
       <Text style={styles.uploadSubtitle}>
-        Tap to choose single or multiple images to compress and save directly into your "Image Compressor" folder
+        Tap to choose single or multiple images to compress and save directly into your &quot;Image Compressor&quot; folder
       </Text>
       <View style={styles.selectButton}>
         <Ionicons name="images-outline" size={18} color="#FFFFFF" style={{ marginRight: 8 }} />

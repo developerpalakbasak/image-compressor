@@ -10,6 +10,33 @@ export const formatFileSize = (bytes?: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
+export const cleanCacheDirectory = async (): Promise<void> => {
+  try {
+    if (!FileSystem.cacheDirectory) return;
+    const contents = await FileSystem.readDirectoryAsync(FileSystem.cacheDirectory);
+    for (const item of contents) {
+      if (
+        item.startsWith('compressed_') ||
+        item === 'ImageManipulator' ||
+        item === 'ImagePicker'
+      ) {
+        await FileSystem.deleteAsync(`${FileSystem.cacheDirectory}${item}`, { idempotent: true });
+      }
+    }
+  } catch {
+    // Non-blocking cleanup
+  }
+};
+
+export const deleteDirectorySafely = async (dirUri?: string): Promise<void> => {
+  if (!dirUri) return;
+  try {
+    await FileSystem.deleteAsync(dirUri, { idempotent: true });
+  } catch {
+    // Non-blocking
+  }
+};
+
 export const compressImages = async (
   images: SelectedImage[],
   quality: number,
@@ -23,6 +50,7 @@ export const compressImages = async (
 
   let totalOrigSize = 0;
   let totalCompSize = 0;
+  const nameCounts: Record<string, number> = {};
 
   for (let i = 0; i < images.length; i++) {
     const img = images[i];
@@ -40,10 +68,30 @@ export const compressImages = async (
       }
     );
 
-    const baseName = img.name ? img.name.replace(/\.[^/.]+$/, '') : `image_${i + 1}`;
-    const destFileName = `${baseName}_compressed_${timestamp}_${i + 1}.jpg`;
+    // Keep original file base name
+    const rawName = img.name ? img.name.replace(/\.[^/.]+$/, '').trim() : `image`;
+    const cleanBaseName = rawName || `image_${i + 1}`;
+
+    // Handle duplicate names with serial numbers: name.jpg, name (1).jpg, name (2).jpg
+    let finalBaseName: string;
+    if (nameCounts[cleanBaseName] === undefined) {
+      nameCounts[cleanBaseName] = 0;
+      finalBaseName = cleanBaseName;
+    } else {
+      nameCounts[cleanBaseName] += 1;
+      finalBaseName = `${cleanBaseName} (${nameCounts[cleanBaseName]})`;
+    }
+
+    const destFileName = `${finalBaseName}.jpg`;
     const destPath = `${outputDir}${destFileName}`;
-    await FileSystem.copyAsync({ from: manipulated.uri, to: destPath });
+
+    // Move rather than copy to prevent keeping duplicates in cache
+    try {
+      await FileSystem.moveAsync({ from: manipulated.uri, to: destPath });
+    } catch {
+      await FileSystem.copyAsync({ from: manipulated.uri, to: destPath });
+      await FileSystem.deleteAsync(manipulated.uri, { idempotent: true }).catch(() => {});
+    }
 
     const info = await FileSystem.getInfoAsync(destPath);
     const compSize = (info.exists && 'size' in info) ? (info.size || 0) : 0;
@@ -66,5 +114,6 @@ export const compressImages = async (
     totalOriginalSize: totalOrigSize,
     totalCompressedSize: totalCompSize,
     reductionPercentage: savedPercent,
+    outputDirectoryUri: outputDir,
   };
 };

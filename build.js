@@ -17,10 +17,10 @@ try {
     console.log('🚀 Starting Build Process...');
 
     // 1. Remove existing android directory and Run Expo Prebuild
-    if (fs.existsSync(androidDir)) {
-        console.log('🗑️ Removing existing android directory...');
-        fs.rmSync(androidDir, { recursive: true, force: true });
-    }
+    // if (fs.existsSync(androidDir)) {
+    //     console.log('🗑️ Removing existing android directory...');
+    //     fs.rmSync(androidDir, { recursive: true, force: true });
+    // }
 
     console.log('🔨 Running Expo Prebuild...');
     execSync('npx expo prebuild --platform android --no-install', { stdio: 'inherit' });
